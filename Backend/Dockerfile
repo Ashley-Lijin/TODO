@@ -16,8 +16,8 @@ RUN pip install --no-cache-dir -r requirement.txt
 # Copy the rest of the app
 COPY . .
 
-# Expose port (update if you add FastAPI/uvicorn later)
-EXPOSE 8000
+# MCP server listens on 8001 when using SSE transport
+EXPOSE 8001
 
-# Run the app as a module (same as: python3 -m app.main)
-CMD ["python3", "-m", "app.main"]
+# Run the MCP server (transport is controlled via MCP_TRANSPORT env var)
+CMD ["python3", "-m", "mcpserver.server"]

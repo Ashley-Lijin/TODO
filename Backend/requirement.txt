@@ -2,3 +2,4 @@ SQLAlchemy[asyncio]
 psycopg2-binary
 python-dotenv
 mcp
+trio
