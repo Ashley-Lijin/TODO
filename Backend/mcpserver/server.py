@@ -4,7 +4,11 @@ import os
 
 API = os.getenv("API_URL", "http://localhost:8000")
 
-mcp = FastMCP("smart-planner")
+mcp = FastMCP(
+    "smart-planner",
+    host=os.getenv("FASTMCP_HOST", "127.0.0.1"),
+    port=int(os.getenv("FASTMCP_PORT", "8001"))
+)
 
 @mcp.tool()
 def get_all_tasks():
@@ -82,7 +86,9 @@ def get_archived_tasks():
 
 if __name__ == "__main__":
     transport = os.getenv("MCP_TRANSPORT", "http")
-    if transport == "http":
+    if transport == "sse":
+        mcp.run(transport="sse")
+    elif transport == "http":
         mcp.run(transport="streamable-http")
     else:
         mcp.run(transport="stdio")
