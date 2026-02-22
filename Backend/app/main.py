@@ -6,16 +6,35 @@ init_db()
 session = Session()
 
 # # Add a sample task
-# new_task = Task(
-#     title="Clean mac storage",
-#     description="clean the macs downloads folder and clear cache",
+# new_task = [Task(
+#     title="Make an gust invitation for SCIFA '26",
+#     description="make an guest invitation for SCIFA '26 using liquid glass",
 #     due_date=datetime(2026, 2, 22, 22, 30, 0),
-#     priority=PriorityRank.C,
-#     time_required_for_work=time(0, 10, 0),
+#     priority=PriorityRank.A,
+#     time_required_for_work=time(1, 00, 0),
 #     completed=False,
-#     catagory="Work"
-# )
-# session.add(new_task)
+#     category="College"
+# ),
+# Task(
+#     title="Make an Promo Vidoe for SCIFA '26",
+#     description="Make an catchy 20-30 sec promo video for SCIFA '26",
+#     due_date=datetime(2026, 2, 22, 22, 30, 0),
+#     priority=PriorityRank.B,
+#     time_required_for_work=time(1, 30, 0),
+#     completed=False,
+#     category="College"
+# ),
+# Task(
+#     title="make an ranking system in excel and paper version for judge",
+#     description="",
+#     due_date=datetime(2026, 2, 24, 22, 30, 0),
+#     priority=PriorityRank.A,
+#     time_required_for_work=time(0, 50, 0),
+#     completed=False,
+#     category="College"
+# ),
+# ]
+# session.add_all(new_task)
 # session.commit()
 
 
@@ -30,7 +49,7 @@ def update_task(task_id, **kwargs):
     print(f"Task {task_id} updated!")
 
 
-update_task(1, completed=True)
+# update_task(1, completed=True)
 
 # Query all tasks
 tasks = session.query(Task).all()

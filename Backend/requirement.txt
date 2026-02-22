@@ -3,3 +3,8 @@ psycopg2-binary
 python-dotenv
 mcp
 trio
+fastapi
+uvicorn
+typer
+rich
+requests

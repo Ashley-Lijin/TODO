@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smart-planner"
+version = "0.1.0"
+dependencies = [
+    "typer",
+    "rich",
+    "requests"
+]
+
+[project.scripts]
+todo = "cli.todo:app"
+
+[tool.setuptools.packages.find]
+where = ["."]

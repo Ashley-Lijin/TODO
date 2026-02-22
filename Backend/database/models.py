@@ -38,3 +38,19 @@ class TodayTask(Base):
 
     def __repr__(self):
         return f"<TodayTask(task_id={self.task_id}, order={self.order})>"
+
+class ArchivedTask(Base):
+    __tablename__ = "archived_tasks"
+    id = Column(Integer, primary_key=True)
+    original_id = Column(Integer, nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=True)
+    due_date = Column(DateTime, nullable=False)
+    priority = Column(SAEnum(PriorityRank), nullable=False)
+    time_required_for_work = Column(Time, nullable=False)
+    category = Column(String(255), nullable=False)
+    created_at = Column(DateTime, nullable=False)
+    completed_at = Column(DateTime, nullable=False, default=datetime.now)
+
+    def __repr__(self):
+        return f"<ArchivedTask(id={self.id}, title='{self.title}')>"

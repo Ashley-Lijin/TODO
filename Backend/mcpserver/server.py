@@ -130,6 +130,13 @@ def add_task(title: str, description: str, due_date: str, priority: str, time_re
     session.close()
     return {"success": f"Task '{title}' added!"}
 
+@mcp.tool()
+def cleanup_completed_tasks():
+    """Archive completed tasks from previous days - call this each morning"""
+    import requests
+    res = requests.post("http://localhost:8000/tasks/cleanup")
+    return res.json()
+
 if __name__ == "__main__":
     import os
     transport = os.getenv("MCP_TRANSPORT", "stdio")

@@ -16,16 +16,19 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
+  mcp:
     build:
       context: ./Backend
     environment:
       DB_URL: postgresql://megatron:Megatron@db:5432/TODO
+      MCP_TRANSPORT: sse
     ports:
-      - "8000:8000"
+      - "8001:8001"
+    command: [ "python3", "-m", "mcpserver.server" ]
     depends_on:
       db:
         condition: service_healthy
+    restart: on-failure
 
 volumes:
   postgres_data:
