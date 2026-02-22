@@ -16,18 +16,34 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: ./Backend
+    environment:
+      DB_URL: postgresql://megatron:Megatron@db:5432/TODO
+    ports:
+      - "8000:8000"
+    command: [ "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000" ]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
   mcp:
     build:
       context: ./Backend
     environment:
       DB_URL: postgresql://megatron:Megatron@db:5432/TODO
       MCP_TRANSPORT: sse
+      API_URL: http://api:8000
     ports:
       - "8001:8001"
     command: [ "python3", "-m", "mcpserver.server" ]
     depends_on:
       db:
         condition: service_healthy
+      api:
+        condition: service_started
     restart: on-failure
 
 volumes:

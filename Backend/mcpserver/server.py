@@ -133,8 +133,10 @@ def add_task(title: str, description: str, due_date: str, priority: str, time_re
 @mcp.tool()
 def cleanup_completed_tasks():
     """Archive completed tasks from previous days - call this each morning"""
+    import os
     import requests
-    res = requests.post("http://localhost:8000/tasks/cleanup")
+    api_url = os.getenv("API_URL", "http://localhost:8000")
+    res = requests.post(f"{api_url}/tasks/cleanup")
     return res.json()
 
 if __name__ == "__main__":
