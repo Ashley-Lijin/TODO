@@ -16,6 +16,9 @@ RUN pip install --no-cache-dir -r requirement.txt
 # Copy the rest of the app
 COPY . .
 
+# Install the CLI and current project
+RUN pip install .
+
 # Expose ports for both the API (8000) and the MCP Server (8001)
 EXPOSE 8000
 EXPOSE 8001

@@ -3,6 +3,7 @@ from database.db import Session
 from database.models import Task, TodayTask, ArchivedTask, PriorityRank
 from pydantic import BaseModel
 from datetime import datetime, date, time
+from typing import List
 
 router = APIRouter()
 
@@ -21,6 +22,9 @@ class TaskUpdate(BaseModel):
     priority: str | None = None
     time_required: str | None = None
     category: str | None = None
+
+class TodayTasksSet(BaseModel):
+    task_ids: list[int]
 
 @router.get("/")
 def get_all_tasks():
@@ -201,3 +205,21 @@ def cleanup_completed():
     session.commit()
     session.close()
     return {"success": True, "archived": archived_count}
+
+# Mcp
+
+@router.post("/today")
+def set_today_tasks(data: TodayTasksSet):
+    session = Session()
+    session.query(TodayTask).filter(TodayTask.date == date.today()).delete()
+    session.commit()
+    for order, task_id in enumerate(data.task_ids, start=1):
+        task = session.query(Task).filter(Task.id == task_id, Task.completed == False).first()
+        if not task:
+            continue
+        today_task = TodayTask(task_id=task_id, date=date.today(), order=order)
+        session.add(today_task)
+    session.commit()
+    session.close()
+    return {"success": True, "count": len(data.task_ids)}
+
