@@ -83,6 +83,6 @@ def get_archived_tasks():
 if __name__ == "__main__":
     transport = os.getenv("MCP_TRANSPORT", "stdio")
     if transport == "sse":
-        mcp.run(transport="sse", host="0.0.0.0", port=8001)
+        mcp.run(transport="sse")
     else:
         mcp.run(transport="stdio")
