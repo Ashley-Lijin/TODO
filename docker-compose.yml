@@ -39,7 +39,7 @@ services:
       FASTMCP_PORT: 8001
     ports:
       - "8001:8001"
-    command: [ "python3", "-m", "mcpserver.server" ]
+    command: [ "python3", "-m", "mcpserver.server", "--host", "0.0.0.0", "--port", "8001" ]
     depends_on:
       api:
         condition: service_started
