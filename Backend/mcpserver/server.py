@@ -85,7 +85,7 @@ def get_archived_tasks():
     return res.json()
 
 if __name__ == "__main__":
-    transport = os.getenv("MCP_TRANSPORT", "http")
+    transport = os.getenv("MCP_TRANSPORT", "sse")
     if transport == "sse":
         mcp.run(transport="sse")
     elif transport == "http":
