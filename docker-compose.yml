@@ -33,15 +33,14 @@ services:
     build:
       context: ./Backend
     environment:
-      DB_URL: postgresql://megatron:Megatron@db:5432/TODO
       MCP_TRANSPORT: sse
       API_URL: http://api:8000
+      FASTMCP_HOST: 0.0.0.0
+      FASTMCP_PORT: 8001
     ports:
       - "8001:8001"
     command: [ "python3", "-m", "mcpserver.server" ]
     depends_on:
-      db:
-        condition: service_healthy
       api:
         condition: service_started
     restart: on-failure
