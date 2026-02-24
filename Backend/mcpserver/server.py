@@ -1,6 +1,11 @@
 from mcp.server.fastmcp import FastMCP
 import requests
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 API = os.getenv("API_URL", "http://localhost:8000")
 
@@ -85,10 +90,8 @@ def get_archived_tasks():
     return res.json()
 
 if __name__ == "__main__":
-    transport = os.getenv("MCP_TRANSPORT", "sse")
+    transport = os.getenv("MCP_TRANSPORT", "stdio")
     if transport == "sse":
-        mcp.run(transport="sse")
-    elif transport == "http":
-        mcp.run(transport="streamable-http")
+        mcp.run(transport="sse", host="0.0.0.0", port=8001)
     else:
         mcp.run(transport="stdio")

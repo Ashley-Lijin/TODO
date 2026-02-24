@@ -5,11 +5,17 @@ from rich.table import Table
 from rich.text import Text
 from rich import box
 from datetime import datetime
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 app = typer.Typer()
 console = Console()
 
-API = "http://localhost:8000"
+API = os.getenv("API_URL", "http://localhost:8000")
 
 PRIORITY_COLOR = {
     "S": "bold magenta",
