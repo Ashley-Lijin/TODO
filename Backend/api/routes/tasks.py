@@ -22,6 +22,7 @@ class TaskUpdate(BaseModel):
     priority: str | None = None
     time_required: str | None = None
     category: str | None = None
+    suggested_priority: str | None = None
 
 class TodayTasksSet(BaseModel):
     task_ids: list[int]
@@ -66,7 +67,8 @@ def get_today_tasks():
             "priority": tt.task.priority.value,
             "time_required": str(tt.task.time_required_for_work),
             "category": tt.task.category,
-            "completed": tt.task.completed
+            "completed": tt.task.completed,
+            "suggested_start_time": str(tt.task.suggested_start_time) if tt.task.suggested_start_time else None
         }
         for tt in today_tasks
     ]
@@ -123,7 +125,7 @@ def update_task(task_id: int, data: TaskUpdate):
     if not task:
         session.close()
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     if data.title is not None:
         task.title = data.title
     if data.description is not None:
@@ -137,6 +139,8 @@ def update_task(task_id: int, data: TaskUpdate):
         task.time_required_for_work = time(h, m, s)
     if data.category is not None:
         task.category = data.category
+    if data.suggested_priority is not None:
+        task.suggested_priority = PriorityRank[data.suggested_priority]
 
     session.commit()
     session.close()
@@ -186,6 +190,10 @@ def cleanup_completed():
         ).first() is None
 
         if was_today or never_today:
+            actual_duration_minutes = None
+            if task.started_at:
+                actual_duration_minutes = int((datetime.now() - task.started_at).total_seconds() / 60)
+
             archived = ArchivedTask(
                 original_id=task.id,
                 title=task.title,
@@ -195,7 +203,10 @@ def cleanup_completed():
                 time_required_for_work=task.time_required_for_work,
                 category=task.category,
                 created_at=task.created_at,
-                completed_at=datetime.now()
+                completed_at=datetime.now(),
+                started_at=task.started_at,
+                actual_duration_minutes=actual_duration_minutes,
+                suggested_priority=task.suggested_priority
             )
             session.add(archived)
             session.query(TodayTask).filter(TodayTask.task_id == task.id).delete()
@@ -207,6 +218,91 @@ def cleanup_completed():
     return {"success": True, "archived": archived_count}
 
 # Mcp
+
+@router.patch("/{task_id}/start")
+def start_task(task_id: int):
+    """Start a task by setting started_at timestamp"""
+    session = Session()
+    task = session.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        session.close()
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.started_at = datetime.now()
+    started_at = task.started_at
+    session.commit()
+    session.close()
+    return {"success": True, "started_at": str(started_at)}
+
+@router.patch("/{task_id}/suggested_start")
+def set_suggested_start_time(task_id: int, data: dict):
+    """Set suggested start time for a task"""
+    session = Session()
+    task = session.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        session.close()
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    suggested_start_time = data.get("suggested_start_time")
+    if not suggested_start_time:
+        session.close()
+        raise HTTPException(status_code=400, detail="suggested_start_time required")
+
+    h, m, s = map(int, suggested_start_time.split(":"))
+    task.suggested_start_time = time(h, m, s)
+    session.commit()
+    session.close()
+    return {"success": True}
+
+@router.post("/{task_id}/dependencies")
+def set_task_dependencies(task_id: int, data: dict):
+    """Set task dependencies"""
+    session = Session()
+    task = session.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        session.close()
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    depends_on = data.get("depends_on", [])
+
+    # Validate all dependency IDs exist
+    for dep_id in depends_on:
+        dep_task = session.query(Task).filter(Task.id == dep_id).first()
+        if not dep_task:
+            session.close()
+            raise HTTPException(status_code=400, detail=f"Task {dep_id} not found")
+
+    task.dependencies = ",".join(map(str, depends_on)) if depends_on else None
+    session.commit()
+    session.close()
+    return {"success": True}
+
+@router.get("/{task_id}/dependencies")
+def get_task_dependencies(task_id: int):
+    """Get task dependencies with completion status"""
+    session = Session()
+    task = session.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        session.close()
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    depends_on = []
+    if task.dependencies:
+        dep_ids = [int(x.strip()) for x in task.dependencies.split(",") if x.strip()]
+        for dep_id in dep_ids:
+            dep_task = session.query(Task).filter(Task.id == dep_id).first()
+            if dep_task:
+                depends_on.append({
+                    "id": dep_task.id,
+                    "title": dep_task.title,
+                    "completed": dep_task.completed
+                })
+
+    session.close()
+    return {
+        "task_id": task_id,
+        "depends_on": depends_on
+    }
 
 @router.post("/today")
 def set_today_tasks(data: TodayTasksSet):

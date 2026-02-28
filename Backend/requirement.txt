@@ -8,3 +8,4 @@ uvicorn
 typer
 rich
 requests
+icalendar

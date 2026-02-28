@@ -23,6 +23,10 @@ class Task(Base):
     completed = Column(Boolean, nullable=False, default=False)
     category = Column(String(255), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
+    dependencies = Column(String(500), nullable=True)  # comma-sep task IDs, e.g. "3,7"
+    suggested_start_time = Column(Time, nullable=True)  # Claude's suggested start time
+    suggested_priority = Column(SAEnum(PriorityRank), nullable=True)
+    started_at = Column(DateTime, nullable=True)  # set when user runs `todo start`
 
     def __repr__(self):
         return f"<Task(id={self.id}, title='{self.title}', description='{self.description}', due date='{self.due_date}', time required for work='{self.time_required_for_work}', priority='{self.priority}', completed={self.completed}, category='{self.category}', created_at={self.created_at})>"
@@ -51,6 +55,21 @@ class ArchivedTask(Base):
     category = Column(String(255), nullable=False)
     created_at = Column(DateTime, nullable=False)
     completed_at = Column(DateTime, nullable=False, default=datetime.now)
+    started_at = Column(DateTime, nullable=True)
+    actual_duration_minutes = Column(Integer, nullable=True)  # (completed_at - started_at)
+    suggested_priority = Column(SAEnum(PriorityRank), nullable=True)
 
     def __repr__(self):
         return f"<ArchivedTask(id={self.id}, title='{self.title}')>"
+
+class CalendarConfig(Base):
+    __tablename__ = "calendar_config"
+    id = Column(Integer, primary_key=True)
+    source_type = Column(String(10), nullable=False)   # "url" or "file"
+    source_value = Column(String(1000), nullable=False) # webcal:// URL or file path
+    label = Column(String(100), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
+    last_synced_at = Column(DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<CalendarConfig(id={self.id}, label='{self.label}', type='{self.source_type}')>"

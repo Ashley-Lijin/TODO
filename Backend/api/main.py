@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import tasks
+from api.routes import tasks, analytics
 from database.db import init_db
 
 init_db()
@@ -15,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 
 @app.get("/")
 def root():
