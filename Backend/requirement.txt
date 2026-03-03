@@ -9,3 +9,4 @@ typer
 rich
 requests
 icalendar
+slowapi

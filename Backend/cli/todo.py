@@ -17,6 +17,12 @@ app = typer.Typer()
 console = Console()
 
 API = os.getenv("API_URL", "http://localhost:8000")
+API_KEY = os.getenv("API_KEY", "")
+
+# Shared HTTP session — sends API key on every request
+http = requests.Session()
+if API_KEY:
+    http.headers.update({"X-API-Key": API_KEY})
 
 PRIORITY_COLOR = {
     "S": "bold magenta",
@@ -29,7 +35,7 @@ PRIORITY_COLOR = {
 @app.command()
 def today():
     """Show today's tasks planned by Claude"""
-    res = requests.get(f"{API}/tasks/today")
+    res = http.get(f"{API}/tasks/today")
     tasks = res.json()
 
     if not tasks:
@@ -76,7 +82,7 @@ def today():
 @app.command()
 def ls():
     """List all pending tasks"""
-    res = requests.get(f"{API}/tasks/")
+    res = http.get(f"{API}/tasks/")
     tasks = res.json()
 
     if not tasks:
@@ -125,7 +131,7 @@ def add(
     description: str = typer.Option("", "--desc", help="Description"),
 ):
     """Add a new task"""
-    res = requests.post(f"{API}/tasks/", json={
+    res = http.post(f"{API}/tasks/", json={
         "title": title,
         "description": description,
         "due_date": due,
@@ -142,7 +148,7 @@ def add(
 @app.command()
 def complete(task_id: int = typer.Argument(..., help="Task ID to complete")):
     """Mark a task as complete"""
-    res = requests.patch(f"{API}/tasks/{task_id}/complete")
+    res = http.patch(f"{API}/tasks/{task_id}/complete")
     if res.status_code == 200:
         console.print(f"[green]✓[/green] Task [bold]{task_id}[/bold] completed and archived!")
     else:
@@ -156,7 +162,7 @@ def delete(task_id: int = typer.Argument(..., help="Task ID to delete")):
     if not confirm:
         console.print("[dim]Cancelled[/dim]")
         return
-    res = requests.delete(f"{API}/tasks/{task_id}")
+    res = http.delete(f"{API}/tasks/{task_id}")
     if res.status_code == 200:
         console.print(f"[red]✓[/red] Task [bold]{task_id}[/bold] deleted!")
     else:
@@ -186,7 +192,7 @@ def update(
         console.print("[dim]Nothing to update — pass at least one option[/dim]")
         return
 
-    res = requests.patch(f"{API}/tasks/{task_id}", json=payload)
+    res = http.patch(f"{API}/tasks/{task_id}", json=payload)
     if res.status_code == 200:
         console.print(f"[green]✓[/green] Task [bold]{task_id}[/bold] updated!")
     else:
@@ -196,7 +202,7 @@ def update(
 @app.command()
 def archived():
     """Show completed/archived tasks"""
-    res = requests.get(f"{API}/tasks/archived")
+    res = http.get(f"{API}/tasks/archived")
     tasks = res.json()
 
     if not tasks:
@@ -239,7 +245,7 @@ def archived():
 @app.command()
 def cleanup():
     """Archive yesterday's completed tasks"""
-    res = requests.post(f"{API}/tasks/cleanup")
+    res = http.post(f"{API}/tasks/cleanup")
     data = res.json()
     if res.status_code == 200:
         console.print(f"[green]✓[/green] Archived [bold]{data['archived']}[/bold] completed tasks")
@@ -251,7 +257,7 @@ def cleanup():
 @app.command()
 def start(task_id: int = typer.Argument(..., help="Task ID to start")):
     """Start a task (sets timer)"""
-    res = requests.patch(f"{API}/tasks/{task_id}/start")
+    res = http.patch(f"{API}/tasks/{task_id}/start")
     if res.status_code == 200:
         data = res.json()
         started_at = data.get("started_at", "")
@@ -266,7 +272,7 @@ def start(task_id: int = typer.Argument(..., help="Task ID to start")):
 def suggest(task_id: int = typer.Argument(..., help="Task ID to suggest priority for")):
     """Get Claude's priority suggestion for a task"""
     # First get the task
-    res = requests.get(f"{API}/tasks/")
+    res = http.get(f"{API}/tasks/")
     tasks = res.json()
     task = next((t for t in tasks if t["id"] == task_id), None)
 
@@ -275,7 +281,7 @@ def suggest(task_id: int = typer.Argument(..., help="Task ID to suggest priority
         return
 
     # Get priority suggestion
-    res = requests.get(
+    res = http.get(
         f"{API}/analytics/priority-patterns",
         params={"category": task["category"], "keyword": task["title"]}
     )
@@ -297,7 +303,7 @@ def suggest(task_id: int = typer.Argument(..., help="Task ID to suggest priority
 @app.command()
 def deps(task_id: int = typer.Argument(..., help="Task ID to show dependencies for")):
     """Show a task's dependencies"""
-    res = requests.get(f"{API}/tasks/{task_id}/dependencies")
+    res = http.get(f"{API}/tasks/{task_id}/dependencies")
     if res.status_code == 200:
         data = res.json()
         depends_on = data.get("depends_on", [])
@@ -332,7 +338,7 @@ def calendar(
         source_type = "url" if url else "file"
         source_value = url or file
 
-        res = requests.post(
+        res = http.post(
             f"{API}/analytics/calendar",
             json={"source_type": source_type, "source_value": source_value, "label": label}
         )
@@ -343,7 +349,7 @@ def calendar(
             console.print(f"[red]✗ Error:[/red] {res.text}")
 
     elif subcommand == "list":
-        res = requests.get(f"{API}/analytics/calendar")
+        res = http.get(f"{API}/analytics/calendar")
         if res.status_code == 200:
             configs = res.json()
             if not configs:
@@ -377,7 +383,7 @@ def calendar(
 @app.command()
 def insights():
     """Show estimation accuracy and completion patterns"""
-    res = requests.get(f"{API}/analytics/estimation-accuracy")
+    res = http.get(f"{API}/analytics/estimation-accuracy")
     if res.status_code != 200:
         console.print(f"[red]✗ Error fetching insights[/red]")
         return
