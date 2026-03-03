@@ -19,5 +19,5 @@ COPY . .
 # Expose port for API
 EXPOSE 8000
 
-# Run init_db, then migrations, then start API server
-CMD ["sh", "-c", "python -m app.main && python -m database.migrate && uvicorn api.main:app --host 0.0.0.0 --port 8000"]
+# Run init_db (creates tables + migrations), then start API server
+CMD ["sh", "-c", "python -m app.main && uvicorn api.main:app --host 0.0.0.0 --port 8000"]
